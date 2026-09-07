@@ -337,6 +337,33 @@ const seccion5 = [
   texto("Con la infraestructura desplegada, el Gestor Documental quedó accesible a través de la IP pública del balanceador de carga. La aplicación permite iniciar sesión, cargar documentos clasificados por categoría, filtrarlos y descargarlos. En el pie de página se muestra qué instancia atendió cada solicitud, lo que permite evidenciar el funcionamiento del balanceador."),
   ...figura("app-login", "Pantalla de acceso del Gestor Documental, publicada a través del balanceador de carga."),
   ...figura("app-documentos", "Listado de documentos cargados. Al pie se indica la instancia del Scale Set que atendió la solicitud."),
+  h2("5.4 Repositorio del proyecto"),
+  texto("Todo el código de infraestructura, la aplicación, las pruebas y las evidencias recolectadas están disponibles en el siguiente repositorio público:"),
+  new Paragraph({
+    alignment: AlignmentType.CENTER,
+    spacing: { ...LINE, before: 100, after: 200 },
+    children: [new ExternalHyperlink({
+      link: "https://github.com/csilvaig1/eval3-gestor-documental",
+      children: [new TextRun({
+        text: "https://github.com/csilvaig1/eval3-gestor-documental",
+        font: FONT, size: SZ, color: "0563C1", underline: {},
+      })],
+    })],
+  }),
+  texto("La organización del repositorio es la siguiente:"),
+  tabla(
+    ["Directorio", "Contenido"],
+    [
+      ["terraform/", "Definición completa de la infraestructura como código (red, NSG, balanceador, Scale Set, autoescalado, almacenamiento y VM de servicios)"],
+      ["ansible/", "Playbook de configuración de PostgreSQL, Prometheus y Grafana, reglas de alerta y panel de control como código"],
+      ["app/", "Aplicación Flask del Gestor Documental (frontend, API y endpoints /health y /metrics)"],
+      ["pruebas/selenium/", "Suite de pruebas funcionales automatizadas (casos CP-01 a CP-06)"],
+      ["pruebas/carga/", "Generador de carga concurrente usado en la prueba de rendimiento"],
+      ["evidencias/", "Registros de la prueba de falla controlada, de la prueba de carga, del autoescalado, reporte de Selenium y capturas de pantalla"],
+      ["informe/", "Este documento, el diagrama de arquitectura y los scripts que los generan"],
+    ],
+    [2400, 6950]
+  ),
 ];
 
 // ---------------------------------------------------------------------
