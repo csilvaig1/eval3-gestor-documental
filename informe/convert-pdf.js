@@ -22,10 +22,15 @@ const CSS = `
   table { border-collapse: collapse; width: 100%; margin: 8pt 0 12pt 0; font-size: 9.5pt; page-break-inside: avoid; }
   td, th { border: 1px solid #999; padding: 5pt 6pt; vertical-align: middle; text-align: left; line-height: 1.25; }
   tr:first-child td { background: #1B3A5C; color: #fff; font-weight: bold; }
-  .portada { text-align: center; page-break-after: always; padding-top: 5cm; }
+  .portada { text-align: center; page-break-after: always; padding-top: 4cm; }
   .portada p { text-align: center; }
+  /* mammoth entrega la imagen en su tamano original; en la portada hay que
+     acotarla para que no ocupe todo el ancho de la pagina */
+  .portada img { max-width: 8.5cm; margin: 0 auto 0.6cm auto; }
   .indice { page-break-after: always; }
-  .indice ol { padding-left: 18pt; }
+  /* los titulos ya traen su propio numero de seccion, asi que la lista no
+     debe agregar otro */
+  .indice ol { padding-left: 0; list-style: none; }
   .indice li { margin-bottom: 5pt; text-align: left; }
 `;
 
@@ -37,18 +42,25 @@ const CSS = `
   const warns = messages.filter((m) => m.type === "warning").length;
   console.log("mammoth listo,", warns, "avisos");
 
-  // La portada son los párrafos hasta el encabezado "Índice"; se envuelven aparte.
-  const idx = html.indexOf("<h1>Índice</h1>");
+  // La portada es todo lo que va antes del primer encabezado de nivel 1
+  // (que es "1. Resumen ejecutivo..."). Ahí dentro queda tambien el titulo
+  // "Índice" y el campo de indice de Word, que al convertir viene vacio: se
+  // descartan y mas abajo se arma un indice propio.
+  const idx = html.indexOf("<h1>");
   let portada = "", resto = html;
   if (idx > -1) {
-    portada = `<div class="portada">${html.slice(0, idx)}</div>`;
+    // El titulo "Índice" del docx puede venir envuelto en <strong> u otras
+    // etiquetas, por eso se quita cualquier parrafo cuyo texto plano sea "Índice"
+    portada = html.slice(0, idx).replace(
+      /<p>(?:(?!<\/p>).)*?<\/p>/gs,
+      (m) => (m.replace(/<[^>]+>/g, "").trim() === "Índice" ? "" : m)
+    );
+    portada = `<div class="portada">${portada}</div>`;
     resto = html.slice(idx);
   }
-  // El campo de índice de Word queda vacío al convertir: se arma uno propio.
-  resto = resto.replace("<h1>Índice</h1>", "");
   const titulos = [...resto.matchAll(/<h1>(.*?)<\/h1>/g)].map((m) => m[1]);
   const indice = `<div class="indice"><h1>Índice</h1><ol>${titulos
-    .map((t) => `<li>${t.replace(/^\d+\.\s*/, "")}</li>`)
+    .map((t) => `<li>${t}</li>`)
     .join("")}</ol></div>`;
 
   const full = `<!doctype html><html><head><meta charset="utf-8"><style>${CSS}</style></head><body>${portada}${indice}${resto}</body></html>`;

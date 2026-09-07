@@ -154,12 +154,20 @@ const imgData = fs.readFileSync(__dirname + "/arquitectura.png");
 // ---------------------------------------------------------------------
 // PORTADA
 // ---------------------------------------------------------------------
+const logoIpss = fs.readFileSync(__dirname + "/logos/logo-solo.png");
+const dimLogo = medidasPng(logoIpss);
+const anchoLogo = 300;
+
 const portada = [
-  new Paragraph({ spacing: { before: 1200 }, children: [] }),
+  new Paragraph({ spacing: { before: 700 }, children: [] }),
   new Paragraph({
     alignment: AlignmentType.CENTER,
-    spacing: { after: 100 },
-    children: [run("INSTITUTO PROFESIONAL SAN SEBASTIÁN", { bold: true, size: 28 })],
+    spacing: { after: 140 },
+    children: [new ImageRun({
+      data: logoIpss,
+      transformation: { width: anchoLogo, height: Math.round((anchoLogo * dimLogo.alto) / dimLogo.ancho) },
+      type: "png",
+    })],
   }),
   new Paragraph({
     alignment: AlignmentType.CENTER,
@@ -182,8 +190,7 @@ const portada = [
     children: [run('Proyecto VcM: Gestor Documental — Escuela Básica G-733 Chorombo Bajo', { size: 24, bold: true })],
   }),
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 80 }, children: [run("Estudiante: Álvaro Carrasco", { size: 24 })] }),
-  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 80 }, children: [run("Docente de asignatura: Juan Ignacio Roco Aguirre", { size: 22 })] }),
-  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 80 }, children: [run("Docente VcM: [Nombre del docente VcM]", { size: 22, italics: true })] }),
+  new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 80 }, children: [run("Docente: Juan Ignacio Roco Aguirre", { size: 22 })] }),
   new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 700 }, children: [run("María Pinto, Región Metropolitana — 2026", { size: 22 })] }),
   new Paragraph({ children: [new PageBreak()] }),
 ];
@@ -192,7 +199,13 @@ const portada = [
 // ÍNDICE
 // ---------------------------------------------------------------------
 const indice = [
-  h1("Índice"),
+  // El titulo del indice se escribe con formato propio y NO con estilo de
+  // encabezado, para que el indice no se liste a si mismo.
+  new Paragraph({
+    alignment: AlignmentType.LEFT,
+    spacing: { before: 200, after: 240 },
+    children: [run("Índice", { bold: true, size: 30, color: "1B3A5C" })],
+  }),
   new TableOfContents("Índice", { hyperlink: true, headingStyleRange: "1-3" }),
   new Paragraph({ children: [new PageBreak()] }),
 ];
