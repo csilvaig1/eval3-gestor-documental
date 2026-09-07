@@ -1,0 +1,20 @@
+==========================================================
+ CONFIGURACION Y ACTIVIDAD DEL AUTOESCALADO
+ Fecha: 2026-09-07 09:47:34 -03
+==========================================================
+
+--- Configuracion de la politica ---
+Nombre            Habilitado    Minimo    Maximo    PorDefecto
+----------------  ------------  --------  --------  ------------
+autoescalado-app  True          1         2         1
+
+--- Reglas configuradas ---
+Metrica         Operador     Umbral    Ventana    Direccion    Cantidad    Enfriamiento
+--------------  -----------  --------  ---------  -----------  ----------  --------------
+Percentage CPU  GreaterThan  70.0      PT5M       Increase     1           PT5M
+Percentage CPU  LessThan     30.0      PT10M      Decrease     1           PT5M
+
+--- Historial de acciones de escalado (ultima hora) ---
+  2026-09-07T12:27:10 | Succeeded | 
+  2026-09-07T12:25:56 | Succeeded | 
+  2026-09-07T12:25:54 | Started | 

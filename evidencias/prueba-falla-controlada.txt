@@ -1,0 +1,91 @@
+==========================================================
+ PRUEBA DE FALLA CONTROLADA - Gestor Documental Chorombo
+ Fecha: 2026-09-07 09:40:53 -03
+==========================================================
+
+--- [1] ESTADO INICIAL: instancias del Scale Set ---
+Instancia    Estado
+-----------  ---------
+1            Succeeded
+2            Succeeded
+
+--- [2] ESTADO INICIAL: salud del backend pool del balanceador ---
+Direcciones en el pool: 2
+
+--- [3] ESTADO INICIAL: 6 peticiones al sitio, instancia que atiende ---
+  peticion 1: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000001
+  peticion 2: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000002
+  peticion 3: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000001
+  peticion 4: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000001
+  peticion 5: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000001
+  peticion 6: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000001
+
+--- [4] PROVOCANDO LA FALLA: apagando instancia 1 ---
+Hora inicio: 09:41:19
+WARNING: About to power off the VMSS instances...
+They will continue to be billed. To deallocate VMSS instances, run: az vmss deallocate.
+Instancia 1 detenida a las 09:41:53
+
+--- [5] DURANTE LA FALLA: estado de las instancias ---
+Instancia    Estado
+-----------  ---------
+1            Succeeded
+2            Succeeded
+Provisioning succeeded
+VM stopped
+
+--- [6] DURANTE LA FALLA: 10 peticiones seguidas al sitio ---
+  09:41:57 peticion 1: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000002
+  09:42:01 peticion 2: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000002
+  09:42:05 peticion 3: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000002
+  09:42:09 peticion 4: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000002
+  09:42:13 peticion 5: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000002
+  09:42:16 peticion 6: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000002
+  09:42:20 peticion 7: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000002
+  09:42:24 peticion 8: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000002
+  09:42:28 peticion 9: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000002
+  09:42:32 peticion 10: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000002
+
+--- [7] DURANTE LA FALLA: alertas en Prometheus ---
+  CpuAltaEnInstancias    estado=inactive
+  InstanciaCaida         estado=pending
+      -> instancia 10.0.1.5:9100 | pending | desde 2026-09-07T12:41:54
+  EspacioEnDiscoBajo     estado=inactive
+
+--- [8] DURANTE LA FALLA: objetivos de Prometheus ---
+  http://10.0.1.4:8000/metrics           up
+  http://10.0.1.5:8000/metrics           down
+  http://10.0.1.4:9100/metrics           up
+  http://10.0.1.5:9100/metrics           down
+  http://localhost:9100/metrics          up
+
+--- [9] ALERTA DISPARADA (firing) ---
+Hora: 09:44:21
+  ALERTA: InstanciaCaida
+    estado:      firing
+    instancia:   10.0.1.5:9100
+    severidad:   critica
+    activa desde:2026-09-07T12:41:54 UTC
+    resumen:     La instancia 10.0.1.5:9100 no responde
+
+--- [10] RECUPERACION: reencendiendo la instancia 1 ---
+Hora inicio recuperacion: 09:46:26
+Instancia encendida a las 09:47:01
+
+--- [11] Esperando a que Prometheus la vuelva a ver como UP ---
+  09:47:01 - objetivo 10.0.1.5:9100 esta: up
+
+  >>> RECUPERADA. Tiempo total de recuperacion: 35 segundos
+
+--- [12] ESTADO FINAL: alertas ---
+  Alertas activas: 0
+
+--- [13] ESTADO FINAL: peticiones al sitio ---
+  peticion 1: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000001
+  peticion 2: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000001
+  peticion 3: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000001
+  peticion 4: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000002
+  peticion 5: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000001
+  peticion 6: HTTP 200 | Atendido por la instancia: vmss-chorombo-app000001
+
+Prueba finalizada: 2026-09-07 09:47:07

@@ -33,6 +33,10 @@
           - postgresql-contrib
           - python3-psycopg2
           - prometheus-node-exporter
+          # acl es necesario para que Ansible pueda cambiar al usuario postgres
+          # (usuario sin privilegios) al crear la base de datos; sin este
+          # paquete el modulo falla al ajustar permisos de sus archivos temporales.
+          - acl
         state: present
 
     # -------------------------------------------------------------------------
@@ -84,6 +88,30 @@
             fecha_subida TIMESTAMP NOT NULL DEFAULT NOW()
           );
 
+    # La tabla queda como propiedad de postgres (es quien la crea), asi que el
+    # usuario de la aplicacion necesita permisos explicitos sobre ella. Dar ALL
+    # sobre el esquema no alcanza: sin esto la app se conecta bien pero falla
+    # con "permission denied for table documentos" al listar o subir archivos.
+    - name: Dar permisos al usuario de la aplicacion sobre la tabla
+      become_user: postgres
+      community.postgresql.postgresql_privs:
+        db: "{{ bd_nombre }}"
+        role: "{{ bd_usuario }}"
+        type: table
+        objs: documentos
+        privs: SELECT,INSERT,UPDATE,DELETE
+
+    # El id es SERIAL, o sea usa una secuencia aparte: sin permiso sobre ella
+    # los INSERT fallan aunque la tabla si tenga permisos.
+    - name: Dar permisos al usuario de la aplicacion sobre la secuencia del id
+      become_user: postgres
+      community.postgresql.postgresql_privs:
+        db: "{{ bd_nombre }}"
+        role: "{{ bd_usuario }}"
+        type: sequence
+        objs: documentos_id_seq
+        privs: USAGE,SELECT
+
     - name: Permitir que PostgreSQL escuche en la red interna
       lineinfile:
         path: /etc/postgresql/14/main/postgresql.conf
@@ -122,14 +150,14 @@
 
     - name: Descargar Prometheus
       unarchive:
-        src: "https://github.com/prometheus/prometheus/releases/download/v{{ version_prometheus }}/prometheus-{{ version_prometheus }}.linux-amd64.tar.gz"
+        src: "https://github.com/prometheus/prometheus/releases/download/v{{ version_prometheus }}/prometheus-{{ version_prometheus }}.linux-arm64.tar.gz"
         dest: /tmp
         remote_src: true
-        creates: "/tmp/prometheus-{{ version_prometheus }}.linux-amd64"
+        creates: "/tmp/prometheus-{{ version_prometheus }}.linux-arm64"
 
     - name: Copiar los binarios de Prometheus
       copy:
-        src: "/tmp/prometheus-{{ version_prometheus }}.linux-amd64/{{ item }}"
+        src: "/tmp/prometheus-{{ version_prometheus }}.linux-arm64/{{ item }}"
         dest: "/usr/local/bin/{{ item }}"
         remote_src: true
         mode: "0755"

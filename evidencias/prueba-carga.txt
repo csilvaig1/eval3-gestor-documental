@@ -1,0 +1,48 @@
+============================================================
+ PRUEBA DE CARGA - Gestor Documental Chorombo Bajo
+============================================================
+ URL objetivo:        http://74.249.251.136
+ Usuarios simulados:  45
+ Duracion:            300 segundos
+ Inicio:              10:04:07
+------------------------------------------------------------
+  10:04:37 |   30s | peticiones=  2909 | errores=   0 | latencia_media=  595.8 ms
+  10:05:07 |   60s | peticiones=  4560 | errores=   6 | latencia_media=  624.5 ms
+  10:05:37 |   90s | peticiones=  7404 | errores=  14 | latencia_media=  520.8 ms
+  10:06:07 |  120s | peticiones=  9371 | errores=  18 | latencia_media=  663.5 ms
+  10:06:37 |  150s | peticiones= 12133 | errores=  29 | latencia_media=  385.3 ms
+  10:07:07 |  180s | peticiones= 14427 | errores=  32 | latencia_media=  473.9 ms
+  10:07:37 |  210s | peticiones= 16707 | errores=  43 | latencia_media=  490.7 ms
+  10:08:07 |  240s | peticiones= 19170 | errores=  51 | latencia_media=  345.5 ms
+  10:08:37 |  270s | peticiones= 21669 | errores=  62 | latencia_media=  400.2 ms
+  10:09:07 |  300s | peticiones= 23410 | errores=  76 | latencia_media=  369.2 ms
+------------------------------------------------------------
+ RESULTADOS
+------------------------------------------------------------
+  Peticiones totales:      23426
+  Errores:                 78 (0.33%)
+  Throughput:              77.6 peticiones/segundo
+  Latencia media:          461.0 ms
+  Latencia mediana:        295.3 ms
+  Latencia percentil 95:   1442.9 ms
+  Latencia percentil 99:   3488.8 ms
+  Latencia maxima:         19790.6 ms
+
+  Reparto entre instancias (evidencia del balanceador):
+    vmss-chorombo-app000002           11553 peticiones ( 49.3%)
+    vmss-chorombo-app000003           11795 peticiones ( 50.4%)
+
+  Fin: 10:09:09
+
+--- CPU maxima alcanzada durante la prueba (ultimos 10 min) ---
+  10.0.1.4:9100        CPU maxima = 83.0%
+  localhost:9100       CPU maxima = 46.0%
+  10.0.1.5:9100        CPU maxima = 77.4%
+
+--- Estado de las alertas ---
+  CpuAltaEnInstancias    inactive
+  InstanciaCaida         inactive
+  EspacioEnDiscoBajo     inactive
+
+--- Peticiones totales servidas por la aplicacion (metrica propia) ---
+  (metrica peticiones_http_total no encontrada; ver /metrics de la app)

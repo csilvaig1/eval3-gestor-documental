@@ -250,6 +250,7 @@ resource "azurerm_lb_rule" "regla" {
   frontend_ip_configuration_name = "frontend-publico"
   backend_address_pool_ids       = [azurerm_lb_backend_address_pool.pool.id]
   probe_id                       = azurerm_lb_probe.probe.id
+  disable_outbound_snat          = true
 }
 
 # OJO: con un balanceador de SKU Standard, las maquinas del pool pierden la
@@ -260,6 +261,8 @@ resource "azurerm_lb_outbound_rule" "salida" {
   loadbalancer_id         = azurerm_lb.balanceador.id
   protocol                = "All"
   backend_address_pool_id = azurerm_lb_backend_address_pool.pool.id
+
+  depends_on              = [azurerm_lb_rule.regla]
 
   frontend_ip_configuration {
     name = "frontend-publico"
@@ -273,7 +276,15 @@ resource "azurerm_linux_virtual_machine_scale_set" "app" {
   name                = "vmss-${var.prefijo}-app"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
-  sku                 = "Standard_B1s"
+  # La suscripcion Azure for Students tiene restringidas todas las SKU x86
+  # economicas (serie B y Bsv2 aparecen como NotAvailableForSubscription en
+  # todas las regiones) y las familias v7 x86 tienen cuota 0. La unica familia
+  # disponible y con cuota es Bpsv2 (ARM64), por eso las instancias son ARM.
+  # Se probo primero con Standard_B2pts_v2 (1 GB de RAM), pero bajo la prueba
+  # de carga concurrente la instancia se quedaba sin memoria y dejaba de
+  # responder incluso al exportador de metricas. B2pls_v2 tiene los mismos
+  # 2 vCPU (o sea, consume exactamente la misma cuota) pero 4 GB de RAM.
+  sku                 = "Standard_B2pls_v2" # 2 vCPU / 4 GB, burstable ARM64
   instances           = var.instancias_min
   admin_username      = var.usuario_admin
 
@@ -291,7 +302,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "app" {
   source_image_reference {
     publisher = "Canonical"
     offer     = "0001-com-ubuntu-server-jammy"
-    sku       = "22_04-lts-gen2"
+    sku       = "22_04-lts-arm64"
     version   = "latest"
   }
 
@@ -411,7 +422,7 @@ resource "azurerm_linux_virtual_machine" "servicios" {
   name                  = "vm-${var.prefijo}-servicios"
   resource_group_name   = azurerm_resource_group.rg.name
   location              = azurerm_resource_group.rg.location
-  size                  = "Standard_B2s" # 2 vCPU / 4 GB: alcanza para BD + monitoreo
+  size                  = "Standard_B2pls_v2" # 2 vCPU / 4 GB ARM64: alcanza para BD + monitoreo
   admin_username        = var.usuario_admin
   network_interface_ids = [azurerm_network_interface.nic_servicios.id]
 
@@ -423,7 +434,7 @@ resource "azurerm_linux_virtual_machine" "servicios" {
   source_image_reference {
     publisher = "Canonical"
     offer     = "0001-com-ubuntu-server-jammy"
-    sku       = "22_04-lts-gen2"
+    sku       = "22_04-lts-arm64"
     version   = "latest"
   }
 

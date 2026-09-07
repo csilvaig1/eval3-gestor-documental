@@ -5,6 +5,13 @@ terraform.tfvars
 .terraform/
 .terraform.lock.hcl
 
+# Los planes de Terraform incluyen los valores de las variables (entre ellas
+# la clave de la base de datos), ademas de ser artefactos temporales.
+tfplan*.out
+
+# Dependencias de Node usadas solo para generar el informe
+informe/node_modules/
+
 ansible/inventario.ini
 
 # Resultados de las pruebas

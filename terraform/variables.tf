@@ -41,14 +41,19 @@ variable "clave_bd" {
   sensitive   = true
 }
 
+# OJO con la cuota: la suscripcion academica permite 6 vCPU en total por region
+# y las SKU ARM disponibles son de 2 vCPU cada una. Con la VM de servicios
+# ocupando 2 vCPU, quedan 4 vCPU para la aplicacion, es decir 2 instancias como
+# maximo. Por eso el rango es 1-2 y no 2-4: asi queda margen para que el
+# autoescalado pueda efectivamente agregar una instancia durante la prueba.
 variable "instancias_min" {
   description = "Cantidad minima de instancias de la aplicacion"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "instancias_max" {
   description = "Cantidad maxima de instancias de la aplicacion"
   type        = number
-  default     = 4
+  default     = 2
 }

@@ -135,6 +135,9 @@ def test_cp05_persistencia(navegador):
     iniciar_sesion(navegador)
     navegador.get(f"{URL}/logout")
     iniciar_sesion(navegador)
+    # Hay que esperar la redireccion al listado: sin esta espera la prueba
+    # revisa el HTML de la pagina de login y falla aunque el dato si persista.
+    WebDriverWait(navegador, 10).until(EC.url_contains("/documentos"))
     assert "documento_prueba.txt" in navegador.page_source
 
 

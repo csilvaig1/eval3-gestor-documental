@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1000" font-family="Arial, sans-serif">
+  <defs>
+    <marker id="flecha" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#333333"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1400" height="1000" fill="#ffffff"/>
+
+  <text x="700" y="30" text-anchor="middle" font-size="22" font-weight="bold" fill="#1b1b1b">Arquitectura Cloud - Gestor Documental Escuela G-733 Chorombo Bajo (Azure)</text>
+
+  <!-- Actores externos -->
+  <rect x="60" y="55" width="260" height="65" rx="8" fill="#f2f2f2" stroke="#666666" stroke-width="1.5"/>
+  <text x="190" y="82" text-anchor="middle" font-size="14" font-weight="bold">Equipo directivo</text>
+  <text x="190" y="101" text-anchor="middle" font-size="12">(navegador, Internet)</text>
+
+  <rect x="1080" y="55" width="280" height="70" rx="8" fill="#f2f2f2" stroke="#666666" stroke-width="1.5"/>
+  <text x="1220" y="78" text-anchor="middle" font-size="14" font-weight="bold">Administrador</text>
+  <text x="1220" y="95" text-anchor="middle" font-size="11">SSH / Grafana / Prometheus</text>
+  <text x="1220" y="111" text-anchor="middle" font-size="11" font-style="italic">solo desde IP autorizada (mi_ip)</text>
+
+  <!-- Resource Group -->
+  <rect x="40" y="150" width="1330" height="800" rx="10" fill="none" stroke="#d9822b" stroke-width="2" stroke-dasharray="8 5"/>
+  <text x="60" y="175" font-size="14" font-weight="bold" fill="#d9822b">Grupo de recursos: rg-chorombo-eval3  (Azure, región centralus)</text>
+
+  <!-- VNet -->
+  <rect x="65" y="195" width="1280" height="700" rx="10" fill="none" stroke="#0078d4" stroke-width="2" stroke-dasharray="4 4"/>
+  <text x="85" y="218" font-size="13" font-weight="bold" fill="#0078d4">Red virtual: vnet-chorombo — 10.0.0.0/16</text>
+
+  <!-- Load Balancer -->
+  <rect x="555" y="240" width="290" height="70" rx="8" fill="#cfe4fb" stroke="#0078d4" stroke-width="2"/>
+  <text x="700" y="265" text-anchor="middle" font-size="14" font-weight="bold">Azure Load Balancer (Standard)</text>
+  <text x="700" y="282" text-anchor="middle" font-size="11">IP pública fija · componente de publicación</text>
+  <text x="700" y="298" text-anchor="middle" font-size="11">health probe HTTP /health :8000 cada 15s</text>
+
+  <!-- Subnet app -->
+  <rect x="100" y="360" width="580" height="500" rx="8" fill="#fafafa" stroke="#8a8a8a" stroke-width="1.5"/>
+  <text x="120" y="382" font-size="12.5" font-weight="bold">Subred subnet-app — 10.0.1.0/24</text>
+  <text x="120" y="398" font-size="11" font-style="italic">NSG nsg-app: 8000 desde LB/Internet, 22 solo mi_ip</text>
+
+  <rect x="125" y="415" width="530" height="300" rx="8" fill="#eef6ff" stroke="#0078d4" stroke-width="1.5"/>
+  <text x="390" y="437" text-anchor="middle" font-size="13.5" font-weight="bold">VM Scale Set: vmss-chorombo-app</text>
+  <text x="390" y="453" text-anchor="middle" font-size="11">Ubuntu 22.04 ARM64 + Gunicorn + Flask (frontend + API) - Standard_B2pls_v2</text>
+
+  <rect x="150" y="465" width="220" height="95" rx="6" fill="#ffffff" stroke="#0078d4" stroke-width="1.2"/>
+  <text x="260" y="488" text-anchor="middle" font-size="12" font-weight="bold">Instancia 1</text>
+  <text x="260" y="504" text-anchor="middle" font-size="11">Zona de disp. 1</text>
+  <text x="260" y="520" text-anchor="middle" font-size="10.5">/health · /metrics :8000</text>
+  <text x="260" y="535" text-anchor="middle" font-size="10.5">node_exporter :9100</text>
+
+  <rect x="410" y="465" width="220" height="95" rx="6" fill="#ffffff" stroke="#0078d4" stroke-width="1.2"/>
+  <text x="520" y="488" text-anchor="middle" font-size="12" font-weight="bold">Instancia 2</text>
+  <text x="520" y="504" text-anchor="middle" font-size="11">Zona de disp. 2</text>
+  <text x="520" y="520" text-anchor="middle" font-size="10.5">/health · /metrics :8000</text>
+  <text x="520" y="535" text-anchor="middle" font-size="10.5">node_exporter :9100</text>
+
+  <rect x="150" y="580" width="480" height="110" rx="6" fill="#fff7e6" stroke="#d9822b" stroke-width="1.2"/>
+  <text x="390" y="602" text-anchor="middle" font-size="12" font-weight="bold">Azure Monitor Autoscale</text>
+  <text x="390" y="620" text-anchor="middle" font-size="11">Sube 1 instancia si CPU promedio &gt; 70% durante 5 min</text>
+  <text x="390" y="637" text-anchor="middle" font-size="11">Baja 1 instancia si CPU promedio &lt; 30% durante 10 min</text>
+  <text x="390" y="654" text-anchor="middle" font-size="11">rango: 1 a 2 instancias (limitado por la cuota de 6 vCPU)</text>
+
+  <!-- Subnet servicios -->
+  <rect x="720" y="360" width="580" height="500" rx="8" fill="#fafafa" stroke="#8a8a8a" stroke-width="1.5"/>
+  <text x="740" y="382" font-size="12.5" font-weight="bold">Subred subnet-servicios — 10.0.2.0/24</text>
+  <text x="740" y="398" font-size="11" font-style="italic">NSG nsg-servicios: 5432 solo desde subnet-app, 3000/9090/22 solo mi_ip</text>
+
+  <rect x="745" y="415" width="530" height="300" rx="8" fill="#eef6ff" stroke="#0078d4" stroke-width="1.5"/>
+  <text x="1010" y="437" text-anchor="middle" font-size="13.5" font-weight="bold">VM: vm-chorombo-servicios</text>
+  <text x="1010" y="453" text-anchor="middle" font-size="11">Ubuntu 22.04 ARM64 - Standard_B2pls_v2 (configurada con Ansible)</text>
+
+  <rect x="770" y="468" width="230" height="95" rx="6" fill="#ffffff" stroke="#0078d4" stroke-width="1.2"/>
+  <text x="885" y="491" text-anchor="middle" font-size="12" font-weight="bold">PostgreSQL 14</text>
+  <text x="885" y="508" text-anchor="middle" font-size="11">Base de datos "gestordocs"</text>
+  <text x="885" y="524" text-anchor="middle" font-size="10.5">tabla documentos (metadatos)</text>
+  <text x="885" y="540" text-anchor="middle" font-size="10.5">puerto 5432</text>
+
+  <rect x="1015" y="468" width="230" height="95" rx="6" fill="#ffffff" stroke="#0078d4" stroke-width="1.2"/>
+  <text x="1130" y="491" text-anchor="middle" font-size="12" font-weight="bold">Prometheus + Grafana</text>
+  <text x="1130" y="508" text-anchor="middle" font-size="11">Métricas, paneles y alertas</text>
+  <text x="1130" y="524" text-anchor="middle" font-size="10.5">Prometheus :9090</text>
+  <text x="1130" y="540" text-anchor="middle" font-size="10.5">Grafana :3000</text>
+
+  <rect x="770" y="580" width="475" height="60" rx="6" fill="#ffffff" stroke="#0078d4" stroke-width="1.2"/>
+  <text x="1007" y="605" text-anchor="middle" font-size="11.5">node_exporter :9100 (métricas del sistema operativo de esta VM)</text>
+  <text x="1007" y="622" text-anchor="middle" font-size="10.5" font-style="italic">recolectadas por el propio Prometheus (job "servidor-servicios")</text>
+
+  <!-- Storage -->
+  <rect x="360" y="890" width="680" height="80" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.8"/>
+  <text x="700" y="915" text-anchor="middle" font-size="13.5" font-weight="bold">Azure Storage Account: stchorombodocs</text>
+  <text x="700" y="932" text-anchor="middle" font-size="11">Contenedor Blob "documentos" (acceso privado)</text>
+  <text x="700" y="948" text-anchor="middle" font-size="11">HTTPS obligatorio + TLS 1.2 mínimo — almacenamiento de los archivos</text>
+
+  <!-- Flechas -->
+  <!-- Internet -> LB -->
+  <line x1="220" y1="120" x2="590" y2="245" stroke="#333333" stroke-width="1.8" marker-end="url(#flecha)"/>
+  <text x="420" y="232" font-size="11.5" fill="#333333">HTTP :80</text>
+
+  <!-- LB -> VMSS -->
+  <line x1="640" y1="310" x2="440" y2="412" stroke="#333333" stroke-width="1.8" marker-end="url(#flecha)"/>
+  <text x="645" y="345" font-size="11.5" fill="#333333">HTTP :8000</text>
+  <text x="645" y="360" font-size="11.5" fill="#333333">(balanceo round robin)</text>
+
+  <!-- VMSS -> Storage -->
+  <line x1="390" y1="715" x2="550" y2="890" stroke="#2e7d32" stroke-width="1.8" marker-end="url(#flecha)"/>
+  <text x="400" y="800" font-size="11.5" fill="#2e7d32">HTTPS</text>
+  <text x="400" y="815" font-size="11.5" fill="#2e7d32">(SDK Azure Blob)</text>
+
+  <!-- VMSS -> Postgres -->
+  <line x1="655" y1="510" x2="770" y2="510" stroke="#333333" stroke-width="1.8" marker-end="url(#flecha)"/>
+  <text x="662" y="502" font-size="10.5" fill="#333333">PostgreSQL :5432</text>
+
+  <!-- Prometheus -> VMSS (scrape, punteada) -->
+  <line x1="1010" y1="545" x2="660" y2="545" stroke="#7b1fa2" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#flecha)"/>
+  <text x="700" y="565" font-size="10.5" fill="#7b1fa2">scrape :9100 y :8000/metrics (cada 15s)</text>
+
+  <!-- Administrador -> Servicios -->
+  <line x1="1220" y1="125" x2="1220" y2="413" stroke="#333333" stroke-width="1.8" marker-end="url(#flecha)"/>
+  <text x="1050" y="270" font-size="11.5" fill="#333333">SSH :22 · Grafana :3000</text>
+  <text x="1050" y="286" font-size="11.5" fill="#333333">Prometheus :9090 (solo mi_ip)</text>
+
+  <!-- Leyenda -->
+  <rect x="65" y="912" width="16" height="16" fill="#cfe4fb" stroke="#0078d4"/>
+  <text x="88" y="925" font-size="11">Servicio de red / publicación</text>
+  <rect x="65" y="935" width="16" height="16" fill="#eef6ff" stroke="#0078d4"/>
+  <text x="88" y="948" font-size="11">Cómputo (VM / VM Scale Set)</text>
+  <rect x="65" y="958" width="16" height="16" fill="none" stroke="#d9822b" stroke-dasharray="4 3"/>
+  <text x="88" y="971" font-size="11">Límite lógico (grupo de recursos / red / subred)</text>
+</svg>

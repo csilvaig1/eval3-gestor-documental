@@ -1,0 +1,16 @@
+{
+  "name": "informe-eval3",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Genera el Documento Tecnico de Solucion (docx + pdf) de la Evaluacion U3",
+  "scripts": {
+    "build": "node build.js",
+    "pdf": "node convert-pdf.js"
+  },
+  "dependencies": {
+    "docx": "^9.7.1",
+    "mammoth": "^1.12.2",
+    "puppeteer": "^25.10.0",
+    "sharp": "^0.35.4"
+  }
+}
