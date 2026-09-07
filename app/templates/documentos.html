@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block contenido %}
+
+<div class="caja">
+  <h2>Cargar documento</h2>
+  <form method="POST" action="/subir" enctype="multipart/form-data">
+    <label for="archivo">Archivo</label>
+    <input type="file" id="archivo" name="archivo" required>
+
+    <label for="categoria">Categoria</label>
+    <select id="categoria" name="categoria" required>
+      <option value="">-- Seleccione --</option>
+      {% for c in categorias %}
+        <option value="{{ c }}">{{ c }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="descripcion">Descripcion (opcional)</label>
+    <input type="text" id="descripcion" name="descripcion"
+           placeholder="Ej: Citacion reunion de apoderados 5to basico">
+
+    <button type="submit">Subir documento</button>
+  </form>
+</div>
+
+<div class="caja">
+  <h2>Documentos cargados</h2>
+
+  <form method="GET" action="/documentos" style="margin-bottom: 15px;">
+    <label for="filtro">Filtrar por categoria</label>
+    <select id="filtro" name="categoria" onchange="this.form.submit()">
+      <option value="">Todas las categorias</option>
+      {% for c in categorias %}
+        <option value="{{ c }}" {% if c == filtro %}selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+  </form>
+
+  {% if documentos %}
+    <table>
+      <thead>
+        <tr>
+          <th>Archivo</th>
+          <th>Categoria</th>
+          <th>Descripcion</th>
+          <th>Subido por</th>
+          <th>Fecha</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in documentos %}
+        <tr>
+          <td>{{ d.nombre_archivo }}</td>
+          <td>{{ d.categoria }}</td>
+          <td>{{ d.descripcion or "-" }}</td>
+          <td>{{ d.subido_por }}</td>
+          <td>{{ d.fecha_subida.strftime("%d-%m-%Y %H:%M") }}</td>
+          <td><a href="/descargar/{{ d.id }}">Descargar</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p style="font-size: 14px; color: #6b757e;">
+      Todavia no hay documentos cargados en esta categoria.
+    </p>
+  {% endif %}
+</div>
+
+{% endblock %}

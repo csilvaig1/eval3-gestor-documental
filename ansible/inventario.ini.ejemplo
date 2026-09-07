@@ -1,0 +1,10 @@
+# Copiar como inventario.ini y reemplazar la IP por la que entrega Terraform
+# (salida "ip_vm_servicios" despues de terraform apply)
+
+[servicios]
+vm-servicios ansible_host=X.X.X.X
+
+[servicios:vars]
+ansible_user=azureuser
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+ansible_python_interpreter=/usr/bin/python3

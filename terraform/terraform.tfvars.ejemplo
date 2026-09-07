@@ -1,0 +1,14 @@
+# Copiar este archivo como terraform.tfvars y completar con tus datos.
+# IMPORTANTE: terraform.tfvars NO se sube al repositorio (contiene la contrasena).
+
+# Tu IP publica actual. Para averiguarla: curl ifconfig.me
+mi_ip = "190.xxx.xxx.xxx/32"
+
+# Repositorio donde tienes el codigo de la aplicacion
+repo_app = "https://github.com/TU_USUARIO/eval3-gestor-documental.git"
+
+# Contrasena para el usuario de PostgreSQL (invéntala, pero no la pierdas)
+clave_bd = "CambiaEstaClave2026"
+
+# Ruta a tu clave publica SSH
+ruta_clave_publica = "~/.ssh/id_rsa.pub"

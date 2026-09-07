@@ -1,0 +1,249 @@
+---
+# =============================================================================
+# Configuracion de la VM de servicios
+# Instala y deja funcionando PostgreSQL, Prometheus y Grafana.
+#
+# Uso:  ansible-playbook -i inventario.ini playbook-servicios.yml
+# =============================================================================
+
+- name: Configurar la VM de servicios (base de datos y monitoreo)
+  hosts: servicios
+  become: true
+
+  vars:
+    bd_nombre: gestordocs
+    bd_usuario: gestor
+    subred_app: 10.0.1.0/24
+    version_prometheus: "2.53.0"
+
+  tasks:
+
+    # -------------------------------------------------------------------------
+    # Paquetes base
+    # -------------------------------------------------------------------------
+    - name: Actualizar la lista de paquetes
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Instalar PostgreSQL y utilidades
+      apt:
+        name:
+          - postgresql
+          - postgresql-contrib
+          - python3-psycopg2
+          - prometheus-node-exporter
+        state: present
+
+    # -------------------------------------------------------------------------
+    # PostgreSQL: base de datos del gestor documental
+    # -------------------------------------------------------------------------
+    - name: Crear la base de datos del gestor documental
+      become_user: postgres
+      community.postgresql.postgresql_db:
+        name: "{{ bd_nombre }}"
+        state: present
+
+    - name: Crear el usuario de la aplicacion
+      become_user: postgres
+      community.postgresql.postgresql_user:
+        db: "{{ bd_nombre }}"
+        name: "{{ bd_usuario }}"
+        password: "{{ clave_bd }}"
+        state: present
+
+    - name: Dar permisos al usuario sobre la base
+      become_user: postgres
+      community.postgresql.postgresql_privs:
+        db: "{{ bd_nombre }}"
+        role: "{{ bd_usuario }}"
+        type: schema
+        objs: public
+        privs: ALL
+
+    # La tabla se crea aqui, no desde el arranque de la aplicacion. Motivo:
+    # bajo gunicorn el modulo se importa como "app:app" y el bloque
+    # "if __name__ == '__main__'" de app.py nunca se ejecuta, asi que
+    # confiar en el codigo de la app para crear el esquema no funciona en
+    # produccion. Ademas, quien administra la infraestructura (Ansible) es
+    # quien debe controlar los cambios de esquema, no el arranque de cada
+    # instancia de la app (evita condiciones de carrera si escalan varias
+    # instancias a la vez y cada una intenta crear la tabla).
+    - name: Crear la tabla de documentos
+      become_user: postgres
+      community.postgresql.postgresql_query:
+        db: "{{ bd_nombre }}"
+        query: >
+          CREATE TABLE IF NOT EXISTS documentos (
+            id SERIAL PRIMARY KEY,
+            nombre_archivo TEXT NOT NULL,
+            nombre_blob TEXT NOT NULL,
+            categoria TEXT NOT NULL,
+            descripcion TEXT,
+            subido_por TEXT NOT NULL,
+            fecha_subida TIMESTAMP NOT NULL DEFAULT NOW()
+          );
+
+    - name: Permitir que PostgreSQL escuche en la red interna
+      lineinfile:
+        path: /etc/postgresql/14/main/postgresql.conf
+        regexp: "^#?listen_addresses"
+        line: "listen_addresses = '*'"
+      notify: reiniciar postgresql
+
+    # Solo se acepta conexion desde la subred de la aplicacion,
+    # nunca desde Internet (defensa en profundidad junto con el NSG)
+    - name: Autorizar conexiones solo desde la subred de la aplicacion
+      lineinfile:
+        path: /etc/postgresql/14/main/pg_hba.conf
+        line: "host {{ bd_nombre }} {{ bd_usuario }} {{ subred_app }} scram-sha-256"
+        state: present
+      notify: reiniciar postgresql
+
+    # -------------------------------------------------------------------------
+    # Prometheus
+    # -------------------------------------------------------------------------
+    - name: Crear usuario del sistema para Prometheus
+      user:
+        name: prometheus
+        shell: /usr/sbin/nologin
+        system: true
+
+    - name: Crear directorios de Prometheus
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: prometheus
+        group: prometheus
+        mode: "0755"
+      loop:
+        - /etc/prometheus
+        - /var/lib/prometheus
+
+    - name: Descargar Prometheus
+      unarchive:
+        src: "https://github.com/prometheus/prometheus/releases/download/v{{ version_prometheus }}/prometheus-{{ version_prometheus }}.linux-amd64.tar.gz"
+        dest: /tmp
+        remote_src: true
+        creates: "/tmp/prometheus-{{ version_prometheus }}.linux-amd64"
+
+    - name: Copiar los binarios de Prometheus
+      copy:
+        src: "/tmp/prometheus-{{ version_prometheus }}.linux-amd64/{{ item }}"
+        dest: "/usr/local/bin/{{ item }}"
+        remote_src: true
+        mode: "0755"
+      loop:
+        - prometheus
+        - promtool
+
+    - name: Copiar la configuracion de Prometheus
+      copy:
+        src: files/prometheus.yml
+        dest: /etc/prometheus/prometheus.yml
+        owner: prometheus
+        mode: "0644"
+      notify: reiniciar prometheus
+
+    - name: Copiar las reglas de alerta
+      copy:
+        src: files/alertas.yml
+        dest: /etc/prometheus/alertas.yml
+        owner: prometheus
+        mode: "0644"
+      notify: reiniciar prometheus
+
+    - name: Crear el servicio systemd de Prometheus
+      copy:
+        dest: /etc/systemd/system/prometheus.service
+        content: |
+          [Unit]
+          Description=Prometheus
+          After=network.target
+
+          [Service]
+          User=prometheus
+          ExecStart=/usr/local/bin/prometheus \
+            --config.file=/etc/prometheus/prometheus.yml \
+            --storage.tsdb.path=/var/lib/prometheus \
+            --web.listen-address=0.0.0.0:9090
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+      notify: reiniciar prometheus
+
+    - name: Habilitar y arrancar Prometheus
+      systemd:
+        name: prometheus
+        enabled: true
+        state: started
+        daemon_reload: true
+
+    # -------------------------------------------------------------------------
+    # Grafana
+    # -------------------------------------------------------------------------
+    - name: Instalar dependencias para el repositorio de Grafana
+      apt:
+        name: [apt-transport-https, software-properties-common, gnupg]
+        state: present
+
+    - name: Agregar la clave GPG de Grafana
+      apt_key:
+        url: https://apt.grafana.com/gpg.key
+        state: present
+
+    - name: Agregar el repositorio de Grafana
+      apt_repository:
+        repo: "deb https://apt.grafana.com stable main"
+        state: present
+
+    - name: Instalar Grafana
+      apt:
+        name: grafana
+        state: present
+        update_cache: true
+
+    - name: Conectar Grafana con Prometheus como origen de datos
+      copy:
+        dest: /etc/grafana/provisioning/datasources/prometheus.yml
+        content: |
+          apiVersion: 1
+          datasources:
+            - name: Prometheus
+              type: prometheus
+              access: proxy
+              url: http://localhost:9090
+              isDefault: true
+      notify: reiniciar grafana
+
+    - name: Habilitar y arrancar Grafana
+      systemd:
+        name: grafana-server
+        enabled: true
+        state: started
+        daemon_reload: true
+
+    - name: Habilitar el exportador de metricas del propio servidor
+      systemd:
+        name: prometheus-node-exporter
+        enabled: true
+        state: started
+
+  # ---------------------------------------------------------------------------
+  handlers:
+    - name: reiniciar postgresql
+      systemd:
+        name: postgresql
+        state: restarted
+
+    - name: reiniciar prometheus
+      systemd:
+        name: prometheus
+        state: restarted
+        daemon_reload: true
+
+    - name: reiniciar grafana
+      systemd:
+        name: grafana-server
+        state: restarted

@@ -1,0 +1,18 @@
+# Nunca subir credenciales ni estado al repositorio
+terraform.tfvars
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+ansible/inventario.ini
+
+# Resultados de las pruebas
+pruebas/**/resultados.jtl
+pruebas/**/reporte*.html
+pruebas/**/reporte-html/
+pruebas/**/documento_prueba.txt
+
+__pycache__/
+*.pyc
+.pytest_cache/

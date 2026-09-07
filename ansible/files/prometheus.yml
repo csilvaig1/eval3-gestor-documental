@@ -1,0 +1,36 @@
+# Configuracion de Prometheus - Gestor Documental Chorombo Bajo
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Archivo con las reglas de alerta
+rule_files:
+  - /etc/prometheus/alertas.yml
+
+scrape_configs:
+
+  # Metricas del propio servidor de monitoreo
+  - job_name: servidor-servicios
+    static_configs:
+      - targets: ["localhost:9100"]
+
+  # Metricas del sistema operativo de las instancias de la aplicacion.
+  # NOTA: se usan IPs fijas porque el Scale Set asigna 10.0.1.4 y 10.0.1.5
+  # a las dos instancias base. Si el autoescalado agrega una tercera
+  # instancia, esta no queda monitoreada. En una implementacion real se
+  # resolveria con el descubrimiento automatico de Azure (azure_sd_config);
+  # se documenta como brecha y mejora futura en el informe.
+  - job_name: instancias-app-sistema
+    static_configs:
+      - targets:
+          - "10.0.1.4:9100"
+          - "10.0.1.5:9100"
+
+  # Metricas propias de la aplicacion (documentos subidos, descargas, etc.)
+  - job_name: instancias-app-aplicacion
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - "10.0.1.4:8000"
+          - "10.0.1.5:8000"

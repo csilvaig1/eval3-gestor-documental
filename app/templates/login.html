@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block contenido %}
+<div class="caja" style="max-width: 380px; margin: 40px auto;">
+  <h2>Iniciar sesion</h2>
+  <form method="POST">
+    <label for="usuario">Usuario</label>
+    <input type="text" id="usuario" name="usuario" required autofocus>
+
+    <label for="clave">Contrasena</label>
+    <input type="password" id="clave" name="clave" required>
+
+    <button type="submit">Entrar</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+#cloud-config
+# Script de arranque de las instancias de la aplicacion.
+# Instala dependencias, descarga el codigo y levanta el servicio.
+
+package_update: true
+
+packages:
+  - python3-pip
+  - python3-venv
+  - git
+  - prometheus-node-exporter
+
+write_files:
+  # Variables de entorno que necesita la aplicacion
+  - path: /etc/gestordocs.env
+    permissions: '0640'
+    content: |
+      DB_HOST=${db_host}
+      DB_NAME=gestordocs
+      DB_USER=gestor
+      DB_PASS=${clave_bd}
+      BLOB_CONNECTION_STRING=${blob_conn}
+      BLOB_CONTAINER=documentos
+      SECRET_KEY=clave-sesiones-eval3-chorombo
+
+  # Servicio systemd para que la app arranque sola y se reinicie si falla
+  - path: /etc/systemd/system/gestordocs.service
+    content: |
+      [Unit]
+      Description=Gestor Documental Chorombo Bajo
+      After=network.target
+
+      [Service]
+      User=www-data
+      WorkingDirectory=/opt/gestordocs/app
+      EnvironmentFile=/etc/gestordocs.env
+      ExecStart=/opt/gestordocs/venv/bin/gunicorn --workers 2 --bind 0.0.0.0:8000 app:app
+      Restart=always
+      RestartSec=5
+
+      [Install]
+      WantedBy=multi-user.target
+
+runcmd:
+  # Descargar el codigo de la aplicacion desde el repositorio
+  - git clone ${repo_app} /opt/gestordocs
+  - python3 -m venv /opt/gestordocs/venv
+  - /opt/gestordocs/venv/bin/pip install -r /opt/gestordocs/app/requirements.txt
+  - chown -R www-data:www-data /opt/gestordocs
+
+  # NOTA: la tabla "documentos" NO se crea aqui. cloud-init (write_files y
+  # runcmd) corre una sola vez, en el primer arranque de la instancia, y en
+  # ese momento la VM de servicios todavia no tiene PostgreSQL configurado
+  # (eso lo hace el playbook de Ansible, despues de "terraform apply"). Un
+  # "az vmss restart" tampoco vuelve a ejecutar runcmd, asi que intentar
+  # crear la tabla desde aqui no es confiable. El esquema lo crea el
+  # playbook de Ansible (ver playbook-servicios.yml), que es quien de verdad
+  # controla la base de datos.
+
+  # Levantar la aplicacion y el exportador de metricas
+  - systemctl daemon-reload
+  - systemctl enable --now gestordocs
+  - systemctl enable --now prometheus-node-exporter

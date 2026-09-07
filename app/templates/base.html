@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestor Documental - Escuela G-733 Chorombo Bajo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0;
+      background: #f4f6f8;
+      color: #222;
+    }
+    header {
+      background: #1f4e79;
+      color: #fff;
+      padding: 15px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    header h1 { font-size: 18px; margin: 0; }
+    header .sub { font-size: 12px; opacity: 0.85; }
+    header a { color: #fff; font-size: 13px; }
+    main { max-width: 950px; margin: 25px auto; padding: 0 15px; }
+    .caja {
+      background: #fff;
+      border: 1px solid #d5dbe0;
+      border-radius: 5px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    h2 { font-size: 16px; margin-top: 0; }
+    label { display: block; font-size: 13px; margin: 10px 0 4px; font-weight: bold; }
+    input, select, textarea {
+      width: 100%; padding: 8px; border: 1px solid #c3ccd4;
+      border-radius: 4px; font-size: 14px; font-family: inherit;
+    }
+    button {
+      background: #1f4e79; color: #fff; border: none; padding: 10px 18px;
+      border-radius: 4px; font-size: 14px; cursor: pointer; margin-top: 12px;
+    }
+    button:hover { background: #163a5a; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #eaeef2; text-align: left; padding: 9px; }
+    td { padding: 9px; border-bottom: 1px solid #e5e9ed; }
+    .mensaje { padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 14px; }
+    .mensaje.ok { background: #e3f4e6; border: 1px solid #a5d6ae; }
+    .mensaje.error { background: #fbe4e4; border: 1px solid #e0a3a3; }
+    .pie { font-size: 11px; color: #7b858e; text-align: center; margin: 25px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Gestor Documental</h1>
+      <div class="sub">Escuela Basica G-733 Chorombo Bajo - Maria Pinto</div>
+    </div>
+    {% if usuario %}
+      <div>{{ usuario }} | <a href="/logout">Cerrar sesion</a></div>
+    {% endif %}
+  </header>
+
+  <main>
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+      {% for categoria, texto in mensajes %}
+        <div class="mensaje {{ categoria }}">{{ texto }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    {% block contenido %}{% endblock %}
+  </main>
+
+  {% if servidor %}
+    <div class="pie">Atendido por la instancia: {{ servidor }}</div>
+  {% endif %}
+</body>
+</html>

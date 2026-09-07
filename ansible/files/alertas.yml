@@ -1,0 +1,55 @@
+# Reglas de alerta - Gestor Documental Chorombo Bajo
+#
+# La evaluacion exige al menos dos alertas con umbrales justificados.
+# Estas son las dos configuradas, mas una tercera de apoyo.
+
+groups:
+  - name: alertas-gestor-documental
+    rules:
+
+      # -----------------------------------------------------------------
+      # ALERTA 1 - Uso alto de CPU
+      # Justificacion del umbral: se elige 70% porque deja un 30% de
+      # margen para absorber el peak antes de que el usuario note lentitud,
+      # y coincide con el umbral que dispara el autoescalado, de modo que
+      # la alerta avisa exactamente cuando el sistema empieza a escalar.
+      # -----------------------------------------------------------------
+      - alert: CpuAltaEnInstancias
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 70
+        for: 2m
+        labels:
+          severidad: advertencia
+        annotations:
+          resumen: "CPU sobre 70% en {{ $labels.instance }}"
+          descripcion: "La instancia lleva mas de 2 minutos sobre el 70% de uso de CPU. El autoescalado deberia estar agregando una instancia."
+
+      # -----------------------------------------------------------------
+      # ALERTA 2 - Instancia caida
+      # Justificacion: si una instancia deja de responder, el balanceador
+      # la saca del pool y el servicio sigue en pie, pero se pierde
+      # redundancia. Hay que enterarse aunque el sitio siga funcionando.
+      # Esta es la alerta que se gatilla en la prueba de falla controlada.
+      # -----------------------------------------------------------------
+      - alert: InstanciaCaida
+        expr: up{job="instancias-app-sistema"} == 0
+        for: 1m
+        labels:
+          severidad: critica
+        annotations:
+          resumen: "La instancia {{ $labels.instance }} no responde"
+          descripcion: "Prometheus no logra recolectar metricas de la instancia hace mas de 1 minuto. El servicio sigue disponible por el balanceador, pero quedo sin redundancia."
+
+      # -----------------------------------------------------------------
+      # ALERTA 3 (apoyo) - Poco espacio en disco
+      # Justificacion: aunque los documentos van a Blob Storage, si el
+      # disco de la VM se llena la aplicacion deja de escribir logs y
+      # PostgreSQL puede detenerse.
+      # -----------------------------------------------------------------
+      - alert: EspacioEnDiscoBajo
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 20
+        for: 5m
+        labels:
+          severidad: advertencia
+        annotations:
+          resumen: "Queda menos del 20% de disco en {{ $labels.instance }}"
+          descripcion: "Revisar logs y archivos temporales antes de que el servidor se quede sin espacio."
